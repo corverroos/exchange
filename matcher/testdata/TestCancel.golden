@@ -1,0 +1,77 @@
+- seq: 0
+  type: CommandOld
+  trades: []
+  book: |2+
+
+
+- seq: 1
+  type: LimitMaker
+  trades: []
+  book: |+
+    10: 1
+    -------
+    empty
+
+
+- seq: 2
+  type: LimitMaker
+  trades: []
+  book: |+
+    12: 2
+    10: 1
+    -------
+    empty
+
+
+- seq: 3
+  type: CancelFailed
+  trades: []
+  book: |+
+    12: 2
+    10: 1
+    -------
+    empty
+
+
+- seq: 4
+  type: Cancelled
+  trades: []
+  book: |+
+    10: 1
+    -------
+    empty
+
+
+- seq: 5
+  type: MarketFull
+  trades:
+  - makerorderid: 1
+    takerorderid: 5
+    makerfilled: false
+    volume: "0.5"
+    price: "10"
+    isbuy: true
+  book: |+
+    10: 0.5
+    -------
+    empty
+
+
+- seq: 6
+  type: Cancelled
+  trades: []
+  book: |+
+    empty
+    -------
+    empty
+
+
+- seq: 7
+  type: CancelFailed
+  trades: []
+  book: |+
+    empty
+    -------
+    empty
+
+

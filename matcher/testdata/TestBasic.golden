@@ -1,0 +1,155 @@
+- seq: 0
+  type: CommandOld
+  trades: []
+  book: |2+
+
+
+- seq: 1
+  type: CommandUnknown
+  trades: []
+  book: |+
+    empty
+    -------
+    empty
+
+
+- seq: 2
+  type: MarketEmpty
+  trades: []
+  book: |+
+    empty
+    -------
+    empty
+
+
+- seq: 3
+  type: MarketEmpty
+  trades: []
+  book: |+
+    empty
+    -------
+    empty
+
+
+- seq: 4
+  type: LimitMaker
+  trades: []
+  book: |+
+    12: 1
+    -------
+    empty
+
+
+- seq: 5
+  type: LimitMaker
+  trades: []
+  book: |+
+    12: 1
+    -------
+    8: 1
+
+
+- seq: 6
+  type: Posted
+  trades: []
+  book: |+
+    12: 1
+    11: 1
+    -------
+    8: 1
+
+
+- seq: 7
+  type: PostFailed
+  trades: []
+  book: |+
+    12: 1
+    11: 1
+    -------
+    8: 1
+
+
+- seq: 8
+  type: Posted
+  trades: []
+  book: |+
+    12: 1
+    11: 1
+    -------
+    9: 1
+    8: 1
+
+
+- seq: 9
+  type: PostFailed
+  trades: []
+  book: |+
+    12: 1
+    11: 1
+    -------
+    9: 1
+    8: 1
+
+
+- seq: 10
+  type: LimitTaker
+  trades:
+  - makerorderid: 8
+    takerorderid: 10
+    makerfilled: true
+    volume: "1"
+    price: "9"
+    isbuy: false
+  book: |+
+    12: 1
+    11: 1
+    -------
+    8: 1
+
+
+- seq: 11
+  type: LimitTaker
+  trades:
+  - makerorderid: 6
+    takerorderid: 11
+    makerfilled: true
+    volume: "1"
+    price: "11"
+    isbuy: true
+  book: |+
+    12: 1
+    -------
+    8: 1
+
+
+- seq: 12
+  type: LimitPartial
+  trades:
+  - makerorderid: 5
+    takerorderid: 12
+    makerfilled: true
+    volume: "1"
+    price: "8"
+    isbuy: false
+  book: |+
+    12: 1
+    8: 1
+    -------
+    empty
+
+
+- seq: 13
+  type: LimitPartial
+  trades:
+  - makerorderid: 12
+    takerorderid: 13
+    makerfilled: true
+    volume: "1"
+    price: "8"
+    isbuy: true
+  book: |+
+    12: 1
+    -------
+    8: 1
+
+

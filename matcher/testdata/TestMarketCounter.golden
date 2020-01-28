@@ -1,0 +1,63 @@
+- seq: 0
+  type: CommandOld
+  trades: []
+  book: |2+
+
+
+- seq: 1
+  type: LimitMaker
+  trades: []
+  book: |+
+    empty
+    -------
+    10: 1
+
+
+- seq: 2
+  type: LimitMaker
+  trades: []
+  book: |+
+    empty
+    -------
+    10: 1
+    9: 1
+
+
+- seq: 3
+  type: LimitMaker
+  trades: []
+  book: |+
+    empty
+    -------
+    10: 1
+    9: 1
+    8: 2
+
+
+- seq: 4
+  type: MarketFull
+  trades:
+  - makerorderid: 1
+    takerorderid: 4
+    makerfilled: true
+    volume: "1"
+    price: "10"
+    isbuy: false
+  - makerorderid: 2
+    takerorderid: 4
+    makerfilled: true
+    volume: "1"
+    price: "9"
+    isbuy: false
+  - makerorderid: 3
+    takerorderid: 4
+    makerfilled: false
+    volume: "1"
+    price: "8"
+    isbuy: false
+  book: |+
+    empty
+    -------
+    8: 1
+
+
