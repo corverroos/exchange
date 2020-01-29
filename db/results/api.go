@@ -29,7 +29,7 @@ func Create(ctx context.Context, dbc *sql.DB, r matcher.Result) (int64, error) {
 	q.WriteString(", `type`=?")
 	args = append(args, r.Type)
 
-q.WriteString(", `order_id`=?")
+	q.WriteString(", `order_id`=?")
 	args = append(args, r.Command.OrderID)
 
 	q.WriteString(", `trades_json`=?")
@@ -56,13 +56,12 @@ q.WriteString(", `order_id`=?")
 	}
 	defer notify()
 
-	return id , tx.Commit()
+	return id, tx.Commit()
 }
 
 func LookupLast(ctx context.Context, dbc *sql.DB) (*Result, error) {
 	return lookupWhere(ctx, dbc, "true order by id desc limit 1")
 }
-
 
 func ListAll(ctx context.Context, dbc *sql.DB) ([]Result, error) {
 	return listWhere(ctx, dbc, "true")

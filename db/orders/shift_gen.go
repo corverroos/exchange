@@ -5,17 +5,17 @@ package orders
 import (
 	"context"
 	"database/sql"
-	"strings"
-	"time"
 	"github.com/luno/jettison/errors"
 	"github.com/luno/jettison/j"
 	"github.com/luno/shift"
+	"strings"
+	"time"
 )
 
-// Insert inserts a new orders table entity. All the fields of the 
-// createReq receiver are set, as well as status, created_at and updated_at. 
+// Insert inserts a new orders table entity. All the fields of the
+// createReq receiver are set, as well as status, created_at and updated_at.
 // The newly created entity id is returned on success or an error.
-func (一 createReq) Insert(ctx context.Context, tx *sql.Tx,st shift.Status) (int64, error) {
+func (一 createReq) Insert(ctx context.Context, tx *sql.Tx, st shift.Status) (int64, error) {
 	var (
 		q    strings.Builder
 		args []interface{}
@@ -55,9 +55,9 @@ func (一 createReq) Insert(ctx context.Context, tx *sql.Tx,st shift.Status) (in
 }
 
 // Update updates the status of a orders table entity. All the fields of the
-// cancelReq receiver are updated, as well as status and updated_at. 
+// cancelReq receiver are updated, as well as status and updated_at.
 // The entity id is returned on success or an error.
-func (一 cancelReq) Update(ctx context.Context, tx *sql.Tx,from shift.Status, 
+func (一 cancelReq) Update(ctx context.Context, tx *sql.Tx, from shift.Status,
 	to shift.Status) (int64, error) {
 	var (
 		q    strings.Builder
@@ -86,9 +86,9 @@ func (一 cancelReq) Update(ctx context.Context, tx *sql.Tx,from shift.Status,
 }
 
 // Update updates the status of a orders table entity. All the fields of the
-// postReq receiver are updated, as well as status and updated_at. 
+// postReq receiver are updated, as well as status and updated_at.
 // The entity id is returned on success or an error.
-func (一 postReq) Update(ctx context.Context, tx *sql.Tx,from shift.Status, 
+func (一 postReq) Update(ctx context.Context, tx *sql.Tx, from shift.Status,
 	to shift.Status) (int64, error) {
 	var (
 		q    strings.Builder
@@ -120,9 +120,9 @@ func (一 postReq) Update(ctx context.Context, tx *sql.Tx,from shift.Status,
 }
 
 // Update updates the status of a orders table entity. All the fields of the
-// completeReq receiver are updated, as well as status and updated_at. 
+// completeReq receiver are updated, as well as status and updated_at.
 // The entity id is returned on success or an error.
-func (一 completeReq) Update(ctx context.Context, tx *sql.Tx,from shift.Status, 
+func (一 completeReq) Update(ctx context.Context, tx *sql.Tx, from shift.Status,
 	to shift.Status) (int64, error) {
 	var (
 		q    strings.Builder

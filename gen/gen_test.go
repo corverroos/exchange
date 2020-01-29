@@ -1,17 +1,18 @@
 package gen
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/sebdah/goldie/v2"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
-	"math/rand"
-	"testing"
 )
 
 func TestGenRands(t *testing.T) {
 	tests := []struct {
 		Name string
-		Req Request
+		Req  Request
 	}{
 		{
 			Name: "basic",

@@ -4,20 +4,19 @@ import (
 	"sync/atomic"
 )
 
-
 type Metrics struct {
-	getInput func() int
+	getInput  func() int
 	getOutput func() int
-	count int64 // Used with amotic
+	count     int64 // Used with amotic
 }
 
-func (m *Metrics) InputLen() int{
+func (m *Metrics) InputLen() int {
 	return m.getInput()
 }
-func (m *Metrics) OutputLen() int{
+func (m *Metrics) OutputLen() int {
 	return m.getOutput()
 }
-func (m *Metrics) Count() int64{
+func (m *Metrics) Count() int64 {
 	return atomic.LoadInt64(&m.count)
 }
 func (m *Metrics) incCount() {

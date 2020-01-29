@@ -11,13 +11,11 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/luno/fate"
+	"github.com/luno/jettison/errors"
 	"github.com/luno/jettison/j"
 	"github.com/luno/reflex"
-
-	"github.com/luno/fate"
 	"github.com/luno/reflex/rpatterns"
-
-	"github.com/luno/jettison/errors"
 )
 
 // Run runs the exchange returning the first error.
@@ -224,7 +222,7 @@ func ConsumeResults(ctx context.Context, dbc *sql.DB) error {
 		results.ToStream(dbc),
 		cursors.ToStore(dbc),
 		makeResultConsumec(dbc),
-		)
+	)
 	return reflex.Run(ctx, spec)
 }
 

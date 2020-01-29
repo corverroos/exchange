@@ -10,20 +10,18 @@ import (
 	"exchange/matcher"
 	"flag"
 	"fmt"
-	"github.com/luno/jettison/errors"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/corverroos/unsure"
-	"github.com/shopspring/decimal"
-
+	"github.com/luno/jettison/errors"
 	"github.com/luno/jettison/jtest"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var perfCount = flag.Int("perf_count", 10000, "performance test count")
@@ -69,7 +67,7 @@ func TestRun(t *testing.T) {
 		jtest.Assert(t, context.Canceled, err)
 	}()
 
-	total := 2*posts+2*markets+2
+	total := 2*posts + 2*markets + 2
 
 	// Wait for all results
 	waitFor(t, time.Second, func() bool {
@@ -94,7 +92,7 @@ func TestRun(t *testing.T) {
 			require.Equal(t, matcher.TypePosted, r.Type)
 		} else if int(r.Seq) == 2*posts+1 {
 			require.Equal(t, matcher.TypeCancelled, r.Type)
-		} else if int(r.Seq) <= 2*posts+2*markets+1{
+		} else if int(r.Seq) <= 2*posts+2*markets+1 {
 			require.Equal(t, matcher.TypeMarketFull, r.Type)
 		} else if int(r.Seq) == 2*posts+2*markets+2 {
 			require.Equal(t, matcher.TypeCancelFailed, r.Type)
@@ -161,7 +159,7 @@ func waitFor(t *testing.T, timeout time.Duration, f func() bool) {
 			return
 		}
 		if time.Since(t0) < timeout {
-			time.Sleep(time.Millisecond*10) // Don't spin
+			time.Sleep(time.Millisecond * 10) // Don't spin
 			continue
 		}
 		t.Error("timeout waiting for")
@@ -199,7 +197,6 @@ func TestPerformance(t *testing.T) {
 	postOnly.Price = req.Price + 5
 	err := gen.GenOrders(ctx, dbc, postOnly)
 	require.NoError(t, err)
-
 
 	// 5% buy post only
 	postOnly.Buy = true
@@ -330,7 +327,7 @@ func printMetrics(d *depth, m *Metrics, t0 time.Time) {
 		float64(c)/time.Since(t0).Seconds())
 }
 
-type depth struct{
+type depth struct {
 	bids, asks int64
 }
 
@@ -338,6 +335,6 @@ func (d *depth) Set(book *matcher.OrderBook) {
 	atomic.StoreInt64(&d.bids, int64(len(book.Bids)))
 	atomic.StoreInt64(&d.asks, int64(len(book.Asks)))
 }
-func (d *depth) Get() (int64, int64){
-	return atomic.LoadInt64(&d.bids),atomic.LoadInt64(&d.asks)
+func (d *depth) Get() (int64, int64) {
+	return atomic.LoadInt64(&d.bids), atomic.LoadInt64(&d.asks)
 }

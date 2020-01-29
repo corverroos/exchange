@@ -5,8 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"exchange/db/orders"
-	"github.com/shopspring/decimal"
 	"math/rand"
+
+	"github.com/shopspring/decimal"
 )
 
 // Request defines an order generation request.
@@ -28,7 +29,7 @@ type Request struct {
 }
 
 // GenOrders create random orders based on the request values.
-func GenOrders(ctx context.Context, dbc *sql.DB, req Request) (error) {
+func GenOrders(ctx context.Context, dbc *sql.DB, req Request) error {
 	ch := make(chan rands, 1000)
 	go genRands(req, ch)
 
@@ -66,7 +67,7 @@ func GenOrders(ctx context.Context, dbc *sql.DB, req Request) (error) {
 				id = cancels[0]
 				cancels = cancels[1:]
 			} else {
-				last := len(cancels)-1
+				last := len(cancels) - 1
 				id = cancels[last]
 				cancels = cancels[:last]
 			}
