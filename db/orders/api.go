@@ -3,6 +3,7 @@ package orders
 import (
 	"context"
 	"database/sql"
+	"github.com/luno/jettison/j"
 
 	"github.com/luno/jettison/errors"
 
@@ -52,7 +53,8 @@ func RequestCancel(ctx context.Context, dbc *sql.DB, id int64) error {
 
 	err = fsm.Update(ctx, dbc, o.Status, StatusCancelling, cancelReq{ID: id})
 	if err != nil {
-		return errors.Wrap(err, "cancelling error")
+		return errors.Wrap(err, "cancelling error",
+			j.MKV{"id": id, "status": o.Status})
 	}
 
 	return nil
@@ -113,4 +115,8 @@ func Complete(ctx context.Context, dbc *sql.DB, id int64, seq int64) error {
 
 func ScanAll(ctx context.Context, dbc *sql.DB, fn func(*Order) error) error {
 	return scanWhere(ctx, dbc, fn, "true")
+}
+
+func LookupLast(ctx context.Context, dbc *sql.DB) (*Order, error) {
+	return lookupWhere(ctx, dbc, "true order by id desc limit 1")
 }

@@ -46,3 +46,24 @@ create table trades (
   primary key (id),
   unique uniq_seq (seq, seq_idx)
 );
+
+create table results (
+  id bigint not null auto_increment,
+  seq bigint not null,
+  type int not null,
+  order_id bigint not null,
+  created_at datetime(3) not null,
+  trades_json blob,
+
+  primary key (id),
+  unique uniq_seq (seq)
+);
+
+create table result_events (
+  id bigint not null auto_increment,
+  foreign_id bigint not null,
+  timestamp datetime(3) not null,
+  type int not null,
+
+  primary key (id)
+);

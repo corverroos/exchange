@@ -12,7 +12,7 @@ import (
 //go:generate shiftgen -inserter=createReq -updaters=postReq,cancelReq,completeReq -table=orders
 
 var (
-	events = rsql.NewEventsTableInt("order_events")
+	events = rsql.NewEventsTableInt("order_events", rsql.WithEventsInMemNotifier())
 
 	fsm = shift.NewFSM(events).
 		Insert(StatusPending, createReq{}, StatusComplete, StatusCancelling, StatusPosted).

@@ -2,7 +2,6 @@ package matcher
 
 import (
 	"context"
-
 	"github.com/luno/jettison/j"
 
 	"github.com/luno/jettison/errors"
@@ -46,6 +45,7 @@ func Match(ctx context.Context, book OrderBook,
 			Command: cmd,
 		}
 
+		// Call some metrics
 		snap(&book)
 	}
 }
