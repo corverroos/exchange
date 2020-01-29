@@ -21,11 +21,13 @@ import (
 // Run runs the exchange returning the first error.
 func Run(ctx context.Context, dbc *sql.DB, opts ...Option) error {
 	s := &state{
-		dbc:      dbc,
-		input:    make(chan matcher.Command, 1000),
-		output:   make(chan matcher.Result, 1000),
-		snap:     func(*matcher.OrderBook) {},
-		countInc: func() {},
+		dbc:       dbc,
+		input:     make(chan matcher.Command, 1000),
+		output:    make(chan matcher.Result, 1000),
+		snap:      func(*matcher.OrderBook) {},
+		baseScale: 8,
+		countInc:  func() {},
+		mLatency:  func() func() { return func() {} },
 	}
 	for _, opt := range opts {
 		opt(s)
@@ -71,7 +73,8 @@ func Run(ctx context.Context, dbc *sql.DB, opts ...Option) error {
 	}):
 	case err = <-goChan(func() error {
 		// Match errors indicate bigger problems.
-		return matcher.Match(ctx, book, s.input, s.output, 8, s.snap)
+		return matcher.Match(ctx, book, s.input, s.output,
+			s.baseScale, s.snap, s.mLatency)
 	}):
 	}
 
@@ -89,6 +92,7 @@ func WithSnap(f func(book *matcher.OrderBook)) Option {
 func WithMetrics(m *Metrics) Option {
 	return func(s *state) {
 		s.countInc = m.incCount
+		s.mLatency = m.latency
 		m.getOutput = func() int {
 			return len(s.output)
 		}
@@ -109,7 +113,9 @@ type state struct {
 	acks    []*rpatterns.AckEvent
 	lastAck int64
 
-	countInc func()
+	baseScale int
+	countInc  func()
+	mLatency  func() func()
 }
 
 func (s *state) StoreResults(ctx context.Context) error {

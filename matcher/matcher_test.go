@@ -6,15 +6,13 @@ import (
 	"strings"
 	"testing"
 
-	"gopkg.in/yaml.v2"
-
-	"github.com/shopspring/decimal"
-
-	"github.com/luno/jettison/jtest"
-	"github.com/stretchr/testify/require"
-
 	"github.com/luno/jettison/errors"
+	"github.com/luno/jettison/j"
+	"github.com/luno/jettison/jtest"
 	"github.com/sebdah/goldie/v2"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 func TestBasic(t *testing.T) {
@@ -361,11 +359,12 @@ func testMatch(t *testing.T, cmds []Command) {
 	}
 
 	books := make(map[int64]string)
+	latency := func() func() { return func() {} }
 	snap := func(book *OrderBook) {
 		books[book.Sequence] = printBook(book)
 	}
 
-	err := Match(ctx, OrderBook{}, input, output, 8, snap)
+	err := Match(ctx, OrderBook{}, input, output, 8, snap, latency)
 	jtest.Require(t, ctxDone, err)
 	require.Len(t, output, count)
 
@@ -396,7 +395,7 @@ func d(i int64) decimal.Decimal {
 	return decimal.NewFromInt(i)
 }
 
-var ctxDone = errors.New("done")
+var ctxDone = errors.New("done", j.C("ERR_1b0980445da57da5"))
 
 type ctx struct {
 	context.Context

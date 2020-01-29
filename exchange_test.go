@@ -318,12 +318,13 @@ func d(i int) decimal.Decimal {
 func printMetrics(d *depth, m *Metrics, t0 time.Time) {
 	c := m.Count()
 	b, a := d.Get()
-	fmt.Printf("Metrics: in=%d, out=%d, bids=%d, asks=%d, count=%d, rate=%0f cmds/s\n",
+	fmt.Printf("Metrics: in=%d, out=%d, bids=%d, asks=%d, count=%d, latency=%s, rate=%0f cmds/s\n",
 		m.InputLen(),
 		m.OutputLen(),
 		b,
 		a,
 		c,
+		m.MeanLatency(),
 		float64(c)/time.Since(t0).Seconds())
 }
 

@@ -37,11 +37,13 @@ The matching engine consists of three concurrent processes linked by golang chan
  
  Another reflex consumer streams results and update order state machine and inserts any trades. 
  
- ## Performance
+## Performance
+
+> Note: Tests require local mysql with root user without password. It uses default mysql socket.
  
 The current implementation processes around 500 commands per second on a MacBook pro. See exchange_test.go#TestPerformance.
 
 The following things could improve performance:
  - Since it seems like storing results is the bottleneck, write results in batches.
  - Adding support to reflex for streaming directly from append-only table removes need to create result events. 
- - Improve the matching performance using heaps instead of slices.
+ - For large order books, improve the matching performance using heaps instead of slices.
