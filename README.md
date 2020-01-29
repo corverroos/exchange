@@ -39,4 +39,9 @@ The matching engine consists of three concurrent processes linked by golang chan
  
  ## Performance
  
- The current implementation processes around 500 commands per second on a MacBook pro. See exchange_test.go#TestPerformance.
+The current implementation processes around 500 commands per second on a MacBook pro. See exchange_test.go#TestPerformance.
+
+The following things could improve performance:
+ - Since it seems like storing results is the bottleneck, write results in batches.
+ - Adding support to reflex for streaming directly from append-only table removes need to create result events. 
+ - Improve the matching performance using heaps instead of slices.
