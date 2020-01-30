@@ -44,7 +44,7 @@ Another reflex consumer streams results and updates the order state machine and 
 The following is the results of [TestPerformance](./exchange_test.go) as run on a MacBook Pro (2,3 GHz, 8 GB RAM)
 with local MySQL 5.7 on SSD.
 
-The test creates 10000 pseudorandom (deterministic) orders: 10% post only, 70% limit, 20% market orders
+The test creates 50000 pseudorandom (deterministic) orders: 10% post only, 70% limit, 20% market orders
 of which 20% of the limit orders are cancelled and 50% buy vs sell. It starts the exchange (and starts timing) when 
 the post only orders are inserted. It also inserts one last market order after all other orders have been inserted (and cancelled).
 It stops timing when the last market order has been processed. The resulting rate the is the number of commands processed
@@ -56,7 +56,7 @@ The graph shows the history of performance improvements (from old to new).
 | ------------- |--------------:| -----|
 | d2067a8       | 500  | Initial implementation. Reads each order per event and stores each result sequentially.
 | d897059       | 1500 | Stores batches of results per row in results table.
-| Current       | 3000 | Avoid reading orders by storing all data required for commands as event metadata.
+| 5c4ee03       | 3000 | Avoid reading orders by storing all data required for commands as event metadata.
 
 The following things could improve performance:
  - Adding support to reflex for streaming directly from append-only table removes need to create result events. 
