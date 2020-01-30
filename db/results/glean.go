@@ -10,15 +10,15 @@ import (
 type glean struct {
 	Result
 
-	Trades []byte `glean:"trades_json"`
+	Results []byte `glean:"results_json"`
 }
 
-func (g glean) toTrades() ([]matcher.Trade, error) {
-	var tl []matcher.Trade
-	err := json.Unmarshal(g.Trades, &tl)
+func (g glean) toResults() ([]matcher.Result, error) {
+	var rl []matcher.Result
+	err := json.Unmarshal(g.Results, &rl)
 	if err != nil {
 		return nil, err
 	}
 
-	return tl, nil
+	return rl, nil
 }

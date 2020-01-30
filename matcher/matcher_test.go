@@ -375,9 +375,10 @@ func testMatch(t *testing.T, cmds []Command) {
 		Book   string
 	}
 	var rl []r
+	close(output)
 	for i := 0; i < count; i++ {
 		o := <-output
-		seq := o.Command.Sequence
+		seq := o.Sequence
 		require.Equal(t, int64(i), seq)
 		rl = append(rl, r{
 			Seq:    seq,

@@ -49,14 +49,12 @@ create table trades (
 
 create table results (
   id bigint not null auto_increment,
-  seq bigint not null,
-  type int not null,
-  order_id bigint not null,
+  start_seq bigint not null,
+  end_seq bigint not null,
   created_at datetime(3) not null,
-  trades_json blob,
+  results_json blob,
 
-  primary key (id),
-  unique uniq_seq (seq)
+  primary key (id)
 );
 
 create table result_events (

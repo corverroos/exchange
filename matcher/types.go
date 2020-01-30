@@ -60,10 +60,6 @@ type Trade struct {
 
 type Type int
 
-func (t Type) ReflexType() int {
-	return int(t)
-}
-
 const (
 	TypeUnknown        Type = 0
 	TypeCommandOld     Type = 1
@@ -81,7 +77,8 @@ const (
 )
 
 type Result struct {
-	Type    Type
-	Trades  []Trade
-	Command Command
+	Sequence int64
+	OrderID  int64
+	Type     Type
+	Trades   []Trade
 }

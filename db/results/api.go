@@ -9,30 +9,35 @@ import (
 	"time"
 )
 
-func Create(ctx context.Context, dbc *sql.DB, r matcher.Result) (int64, error) {
+const Cursor = "results"
+
+func Create(ctx context.Context, dbc *sql.DB, rl []matcher.Result) (int64, error) {
 	var (
 		q    strings.Builder
 		args []interface{}
 	)
 
-	b, err := json.Marshal(r.Trades)
+	b, err := json.Marshal(rl)
 	if err != nil {
 		return 0, err
+	}
+
+	var start, end int64
+	if len(rl) > 0 {
+		start = rl[0].Sequence
+		end = rl[len(rl)-1].Sequence
 	}
 
 	q.WriteString("insert into results set `created_at`=? ")
 	args = append(args, time.Now())
 
-	q.WriteString(", `seq`=?")
-	args = append(args, r.Command.Sequence)
+	q.WriteString(", `start_seq`=?")
+	args = append(args, start)
 
-	q.WriteString(", `type`=?")
-	args = append(args, r.Type)
+	q.WriteString(", `end_seq`=?")
+	args = append(args, end)
 
-	q.WriteString(", `order_id`=?")
-	args = append(args, r.Command.OrderID)
-
-	q.WriteString(", `trades_json`=?")
+	q.WriteString(", `results_json`=?")
 	args = append(args, b)
 
 	tx, err := dbc.Begin()
@@ -50,13 +55,19 @@ func Create(ctx context.Context, dbc *sql.DB, r matcher.Result) (int64, error) {
 		return 0, err
 	}
 
-	notify, err := events.Insert(ctx, tx, id, r.Type)
+	notify, err := events.Insert(ctx, tx, id, etype{})
 	if err != nil {
 		return 0, err
 	}
 	defer notify()
 
 	return id, tx.Commit()
+}
+
+type etype struct{}
+
+func (e etype) ReflexType() int {
+	return 1
 }
 
 func LookupLast(ctx context.Context, dbc *sql.DB) (*Result, error) {

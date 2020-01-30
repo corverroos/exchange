@@ -27,8 +27,9 @@ func Match(ctx context.Context, book OrderBook,
 		if cmd.Sequence <= book.Sequence {
 			// Ignore old commands
 			output <- Result{
-				Type:    TypeCommandOld,
-				Command: cmd,
+				Sequence: cmd.Sequence,
+				OrderID:  cmd.OrderID,
+				Type:     TypeCommandOld,
 			}
 			continue
 		} else if cmd.Sequence > book.Sequence+1 {
@@ -43,9 +44,10 @@ func Match(ctx context.Context, book OrderBook,
 		book.Sequence = cmd.Sequence
 
 		output <- Result{
-			Type:    typ,
-			Trades:  tl,
-			Command: cmd,
+			Sequence: cmd.Sequence,
+			OrderID:  cmd.OrderID,
+			Type:     typ,
+			Trades:   tl,
 		}
 
 		// Call some metrics

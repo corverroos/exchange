@@ -7,9 +7,8 @@ import (
 
 type Result struct {
 	ID        int64
-	Seq       int64 // Sequence of the matcher command producing this trade.
-	Type      matcher.Type
-	OrderID   int64
+	StartSeq  int64
+	EndSeq    int64
 	CreatedAt time.Time
-	Trades    []matcher.Trade
+	Results   []matcher.Result
 }

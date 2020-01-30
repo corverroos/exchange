@@ -76,7 +76,7 @@ func TestRun(t *testing.T) {
 			return false
 		}
 		assert.NoError(t, err)
-		if r.Seq < int64(total) {
+		if r.EndSeq < int64(total) {
 			return false
 		}
 		cancel()
@@ -86,18 +86,24 @@ func TestRun(t *testing.T) {
 	// Check results
 	rl, err := results.ListAll(ctx, dbc)
 	require.NoError(t, err)
-	require.Len(t, rl, total)
-	for _, r := range rl {
-		if int(r.Seq) <= 2*posts {
-			require.Equal(t, matcher.TypePosted, r.Type)
-		} else if int(r.Seq) == 2*posts+1 {
-			require.Equal(t, matcher.TypeCancelled, r.Type)
-		} else if int(r.Seq) <= 2*posts+2*markets+1 {
-			require.Equal(t, matcher.TypeMarketFull, r.Type)
-		} else if int(r.Seq) == 2*posts+2*markets+2 {
-			require.Equal(t, matcher.TypeCancelFailed, r.Type)
+
+	var count int
+	for _, result := range rl {
+		for _, r := range result.Results {
+			if int(r.Sequence) <= 2*posts {
+				require.Equal(t, matcher.TypePosted, r.Type)
+			} else if int(r.Sequence) == 2*posts+1 {
+				require.Equal(t, matcher.TypeCancelled, r.Type)
+			} else if int(r.Sequence) <= 2*posts+2*markets+1 {
+				require.Equal(t, matcher.TypeMarketFull, r.Type)
+			} else if int(r.Sequence) == 2*posts+2*markets+2 {
+				require.Equal(t, matcher.TypeCancelFailed, r.Type)
+			}
+			count++
 		}
 	}
+
+	require.Equal(t, total, count)
 
 	// Consume results
 	ctx3, cancel := context.WithCancel(ctx)
@@ -120,7 +126,7 @@ func TestRun(t *testing.T) {
 	})
 
 	// Check orders
-	count := 0
+	count = 0
 	fn := func(o *orders.Order) error {
 		switch o.Type {
 		case orders.TypeMarket:
@@ -291,7 +297,7 @@ func TestPerformance(t *testing.T) {
 	wg.Wait()
 	fmt.Printf("All orders created after: %v\n", time.Since(t0))
 
-	// Create one last market orders
+	// Create one last market order
 	id, err := orders.CreateMarketSell(ctx, dbc, decimal.NewFromFloat(req.Amount))
 	require.NoError(t, err)
 
@@ -302,7 +308,10 @@ func TestPerformance(t *testing.T) {
 			return false
 		}
 		assert.NoError(t, err)
-		if r.OrderID != id {
+		if len(r.Results) == 0 {
+			t.Error(t, "result batch empty")
+		}
+		if r.Results[len(r.Results)-1].OrderID != id {
 			return false
 		}
 

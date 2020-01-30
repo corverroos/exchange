@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const cols = " `id`, `seq`, `type`, `order_id`, `created_at`, `trades_json` "
+const cols = " `id`, `start_seq`, `end_seq`, `created_at`, `results_json` "
 const selectPrefix = "select " + cols + " from results where "
 
 var _ time.Time
@@ -48,23 +48,22 @@ func listWhere(ctx context.Context, dbc dbc, where string, args ...interface{}) 
 func scan(row row) (*Result, error) {
 	var g glean
 
-	err := row.Scan(&g.ID, &g.Seq, &g.Type, &g.OrderID, &g.CreatedAt, &g.Trades)
+	err := row.Scan(&g.ID, &g.StartSeq, &g.EndSeq, &g.CreatedAt, &g.Results)
 	if err != nil {
 		return nil, err
 	}
 
-	trades, err := g.toTrades()
+	results, err := g.toResults()
 	if err != nil {
 		return nil, err
 	}
 
 	return &Result{
 		ID:        g.ID,
-		Seq:       g.Seq,
-		Type:      g.Type,
-		OrderID:   g.OrderID,
+		StartSeq:  g.StartSeq,
+		EndSeq:    g.EndSeq,
 		CreatedAt: g.CreatedAt,
-		Trades:    trades,
+		Results:   results,
 	}, nil
 }
 

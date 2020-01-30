@@ -10,6 +10,7 @@ import (
 	"exchange/matcher"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/luno/fate"
 	"github.com/luno/jettison/errors"
@@ -28,6 +29,7 @@ func Run(ctx context.Context, dbc *sql.DB, opts ...Option) error {
 		baseScale: 8,
 		countInc:  func() {},
 		mLatency:  func() func() { return func() {} },
+		maxBatch:  100,
 	}
 	for _, opt := range opts {
 		opt(s)
@@ -116,40 +118,80 @@ type state struct {
 	baseScale int
 	countInc  func()
 	mLatency  func() func()
+	maxBatch  int
 }
 
 func (s *state) StoreResults(ctx context.Context) error {
-	for r := range s.output {
-		if r.Type == matcher.TypeCommandUnknown {
-			// Ignore noops
+	for {
+		// Read up to bax batch available results.
+		var rl []matcher.Result
+		for {
+			// Pop a result if available on channel.
+			var popped bool
+			select {
+			case r := <-s.output:
+				rl = append(rl, r)
+				popped = true
+			default:
+			}
+
+			if !popped && len(rl) > 0 {
+				// Nothing more available now, process batch.
+				break
+			} else if !popped && len(rl) == 0 {
+				// Nothing available yet, wait a bit.
+				time.Sleep(time.Millisecond)
+				continue
+			} else if popped && len(rl) >= s.maxBatch {
+				// Max popped, process batch
+				break
+			} else /* popped && len(rl) < s.maxBatch */ {
+				// Popped another, see if more available.
+				continue
+			}
+		}
+
+		var (
+			toStore []matcher.Result
+			toAck   *rpatterns.AckEvent
+		)
+		for _, r := range rl {
+			if r.Type == matcher.TypeCommandUnknown {
+				// Ignore noops
+				continue
+			}
+			s.countInc() // Do not include noops in "count" metrics.
+
+			s.mu.Lock()
+			e := s.acks[0]
+			s.acks = s.acks[1:]
+			s.mu.Unlock()
+
+			seq := r.Sequence
+
+			if e.IDInt() != seq {
+				return errors.New("result ack not found",
+					j.MKV{"want": seq, "got": e.IDInt()})
+			}
+
+			toAck = e
+			toStore = append(toStore, r)
+		}
+
+		if len(toStore) == 0 {
 			continue
 		}
-		s.countInc()
 
-		s.mu.Lock()
-		e := s.acks[0]
-		s.acks = s.acks[1:]
-		s.mu.Unlock()
-
-		seq := r.Command.Sequence
-
-		if e.IDInt() != seq {
-			return errors.New("result ack not found",
-				j.MKV{"want": seq, "got": e.IDInt()})
-		}
-
-		_, err := results.Create(ctx, s.dbc, r)
+		_, err := results.Create(ctx, s.dbc, toStore)
 		if err != nil {
 			return err
 		}
 
-		err = e.Ack(ctx)
+		err = toAck.Ack(ctx)
 		if err != nil {
 			return err
 		}
 	}
-
-	return errors.New("output channel closed")
 }
 
 func (s *state) Enqueue(ctx context.Context, fate fate.Fate, e *rpatterns.AckEvent) error {
@@ -251,50 +293,53 @@ func makeResultConsumec(dbc *sql.DB) reflex.Consumer {
 	return reflex.NewConsumer("result_consumer",
 		func(ctx context.Context, f fate.Fate, e *reflex.Event) error {
 
-			r, err := results.Lookup(ctx, dbc, e.ForeignIDInt())
+			result, err := results.Lookup(ctx, dbc, e.ForeignIDInt())
 			if err != nil {
 				return err
 			}
 
-			var completed []int64
+			for _, r := range result.Results {
 
-			for i, t := range r.Trades {
-				_, err := trades.Create(ctx, dbc, trades.CreateReq{
-					IsBuy:        t.IsBuy,
-					Seq:          r.Seq,
-					SeqIdx:       i,
-					Price:        t.Price,
-					Volume:       t.Volume,
-					MakerOrderID: t.MakerOrderID,
-					TakerOrderID: t.TakerOrderID,
-				})
-				// TODO(corver): Ignore duplicate on uniq index
-				if err != nil {
-					return err
+				var completed []int64
+
+				for i, t := range r.Trades {
+					_, err := trades.Create(ctx, dbc, trades.CreateReq{
+						IsBuy:        t.IsBuy,
+						Seq:          r.Sequence,
+						SeqIdx:       i,
+						Price:        t.Price,
+						Volume:       t.Volume,
+						MakerOrderID: t.MakerOrderID,
+						TakerOrderID: t.TakerOrderID,
+					})
+					// TODO(corver): Ignore duplicate on uniq index
+					if err != nil {
+						return err
+					}
+
+					if t.MakerFilled {
+						completed = append(completed, t.MakerOrderID)
+					}
 				}
 
-				if t.MakerFilled {
-					completed = append(completed, t.MakerOrderID)
+				if posted[r.Type] {
+					err := orders.UpdatePosted(ctx, dbc, r.OrderID, r.Sequence)
+					// TODO(corver): Ignore already posted errors
+					if err != nil {
+						return err
+					}
 				}
-			}
 
-			if posted[r.Type] {
-				err := orders.UpdatePosted(ctx, dbc, r.OrderID, r.Seq)
-				// TODO(corver): Ignore already posted errors
-				if err != nil {
-					return err
+				if complete[r.Type] {
+					completed = append(completed, r.OrderID)
 				}
-			}
 
-			if complete[r.Type] {
-				completed = append(completed, r.OrderID)
-			}
-
-			for _, id := range completed {
-				err := orders.Complete(ctx, dbc, id, r.Seq)
-				// TODO(corver): Ignore already complete errors
-				if err != nil {
-					return err
+				for _, id := range completed {
+					err := orders.Complete(ctx, dbc, id, r.Sequence)
+					// TODO(corver): Ignore already complete errors
+					if err != nil {
+						return err
+					}
 				}
 			}
 

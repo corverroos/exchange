@@ -35,15 +35,27 @@ The matching engine consists of three concurrent processes linked by golang chan
  - Matching: The matcher reads commands from the input channel, applies it to the order book and pipes the result including any trades into the output channel. 
  - Output: Results are read from the output channel and stored in the results append only log table.
  
- Another reflex consumer streams results and update order state machine and inserts any trades. 
+Another reflex consumer streams results and updates the order state machine and inserts any trades. 
  
 ## Performance
 
 > Note: Tests require local mysql with root user without password. It uses default mysql socket.
- 
-The current implementation processes around 500 commands per second on a MacBook pro. See exchange_test.go#TestPerformance.
+
+The following is the results of [TestPerformance](./exchange_test.go) as run on a MacBook Pro (2,3 GHz, 8 GB RAM)
+with local MySQL 5.7 on SSD.
+
+The test creates 10000 pseudorandom (deterministic) orders: 10% post only, 70% limit, 20% market orders
+of which 20% of the limit orders are cancelled and 50% buy vs sell. It starts the exchange (and starts timing) when 
+the post only orders are inserted. It also inserts one last market order after all other orders have been inserted (and cancelled).
+It stops timing when the last market order has been processed. The resulting rate the is the number of commands processed
+divided by the duration. Processed means that the matching result has been stored in the append only result table.
+
+| Commit        | Rate (cmds/s) | Comment  
+| ------------- |--------------:| -----|
+| d2067a8       | 500  | Initial implementation. Reads each order per event and stores each result sequentially.
+| Current       | 1500 | Stores batches of results per row in results table.
 
 The following things could improve performance:
- - Since it seems like storing results is the bottleneck, write results in batches.
+ - It seems like reading the orders is the bottleneck since the channels are most empty. Avoid reading each order by inserting metadata in events.
  - Adding support to reflex for streaming directly from append-only table removes need to create result events. 
  - For large order books, improve the matching performance using heaps instead of slices.
