@@ -50,10 +50,12 @@ the post only orders are inserted. It also inserts one last market order after a
 It stops timing when the last market order has been processed. The resulting rate the is the number of commands processed
 divided by the duration. Processed means that the matching result has been stored in the append only result table.
 
+The graph shows the history of performance improvements (from old to new).
+
 | Commit        | Rate (cmds/s) | Comment  
 | ------------- |--------------:| -----|
 | d2067a8       | 500  | Initial implementation. Reads each order per event and stores each result sequentially.
-| Current       | 1500 | Stores batches of results per row in results table.
+| d897059       | 1500 | Stores batches of results per row in results table.
 
 The following things could improve performance:
  - It seems like reading the orders is the bottleneck since the channels are most empty. Avoid reading each order by inserting metadata in events.
