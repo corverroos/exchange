@@ -3,10 +3,9 @@ package orders
 import (
 	"context"
 	"database/sql"
-	"github.com/luno/jettison/j"
 
 	"github.com/luno/jettison/errors"
-
+	"github.com/luno/jettison/j"
 	"github.com/shopspring/decimal"
 )
 
@@ -18,7 +17,7 @@ func CreateLimit(ctx context.Context, dbc *sql.DB, isBuy bool, price, volume dec
 		typ = TypePostOnly
 	}
 
-	return fsm.Insert(ctx, dbc, createReq{
+	return fsm.Insert(ctx, dbc, CreateReq{
 		IsBuy:       isBuy,
 		Type:        typ,
 		LimitVolume: volume,
@@ -27,7 +26,7 @@ func CreateLimit(ctx context.Context, dbc *sql.DB, isBuy bool, price, volume dec
 }
 
 func CreateMarketSell(ctx context.Context, dbc *sql.DB, counter decimal.Decimal) (int64, error) {
-	return fsm.Insert(ctx, dbc, createReq{
+	return fsm.Insert(ctx, dbc, CreateReq{
 		Type:          TypeMarket,
 		IsBuy:         false,
 		MarketCounter: counter,
@@ -35,7 +34,7 @@ func CreateMarketSell(ctx context.Context, dbc *sql.DB, counter decimal.Decimal)
 }
 
 func CreateMarketBuy(ctx context.Context, dbc *sql.DB, base decimal.Decimal) (int64, error) {
-	return fsm.Insert(ctx, dbc, createReq{
+	return fsm.Insert(ctx, dbc, CreateReq{
 		Type:       TypeMarket,
 		IsBuy:      true,
 		MarketBase: base,
@@ -51,7 +50,7 @@ func RequestCancel(ctx context.Context, dbc *sql.DB, id int64) error {
 		return errors.New("cannot cancel complete order")
 	}
 
-	err = fsm.Update(ctx, dbc, o.Status, StatusCancelling, cancelReq{ID: id})
+	err = fsm.Update(ctx, dbc, o.Status, StatusCancelling, cancelReq{ID: id, isBuy: o.IsBuy})
 	if err != nil {
 		return errors.Wrap(err, "cancelling error",
 			j.MKV{"id": id, "status": o.Status})

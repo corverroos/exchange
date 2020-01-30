@@ -11,6 +11,7 @@ create table order_events (
   foreign_id bigint not null,
   timestamp datetime(3) not null,
   type int not null,
+  metadata blob,
 
   primary key (id)
 );

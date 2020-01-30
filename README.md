@@ -56,8 +56,8 @@ The graph shows the history of performance improvements (from old to new).
 | ------------- |--------------:| -----|
 | d2067a8       | 500  | Initial implementation. Reads each order per event and stores each result sequentially.
 | d897059       | 1500 | Stores batches of results per row in results table.
+| Current       | 3000 | Avoid reading orders by storing all data required for commands as event metadata.
 
 The following things could improve performance:
- - It seems like reading the orders is the bottleneck since the channels are most empty. Avoid reading each order by inserting metadata in events.
  - Adding support to reflex for streaming directly from append-only table removes need to create result events. 
  - For large order books, improve the matching performance using heaps instead of slices.

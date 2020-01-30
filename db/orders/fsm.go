@@ -1,7 +1,9 @@
 package orders
 
 import (
+	"context"
 	"database/sql"
+	"encoding/json"
 
 	"github.com/luno/reflex"
 	"github.com/luno/reflex/rsql"
@@ -9,20 +11,22 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-//go:generate shiftgen -inserter=createReq -updaters=postReq,cancelReq,completeReq -table=orders
+//go:generate shiftgen -inserter=CreateReq -updaters=postReq,cancelReq,completeReq -table=orders
 
 var (
-	events = rsql.NewEventsTableInt("order_events", rsql.WithEventsInMemNotifier())
+	events = rsql.NewEventsTableInt("order_events",
+		rsql.WithEventsInMemNotifier(),
+		rsql.WithEventMetadataField("metadata"))
 
-	fsm = shift.NewFSM(events).
-		Insert(StatusPending, createReq{}, StatusComplete, StatusCancelling, StatusPosted).
+	fsm = shift.NewFSM(events, shift.WithMetadata()).
+		Insert(StatusPending, CreateReq{}, StatusComplete, StatusCancelling, StatusPosted).
 		Update(StatusPosted, postReq{}, StatusComplete, StatusCancelling).
 		Update(StatusCancelling, cancelReq{}, StatusComplete).
 		Update(StatusComplete, completeReq{}).Build()
 )
 
 type (
-	createReq struct {
+	CreateReq struct {
 		Type  Type
 		IsBuy bool
 
@@ -34,7 +38,8 @@ type (
 	}
 
 	cancelReq struct {
-		ID int64
+		ID    int64
+		isBuy bool // Only for metadata
 	}
 
 	postReq struct {
@@ -54,4 +59,20 @@ func ToStream(dbc *sql.DB) reflex.StreamFunc {
 
 func FillGaps(dbc *sql.DB) {
 	rsql.FillGaps(dbc, events)
+}
+
+func (r cancelReq) GetMetadata(ctx context.Context, tx *sql.Tx, from shift.Status, to shift.Status) ([]byte, error) {
+	return json.Marshal(&r.isBuy)
+}
+
+func (r postReq) GetMetadata(ctx context.Context, tx *sql.Tx, from shift.Status, to shift.Status) ([]byte, error) {
+	return nil, nil
+}
+
+func (r completeReq) GetMetadata(ctx context.Context, tx *sql.Tx, from shift.Status, to shift.Status) ([]byte, error) {
+	return nil, nil
+}
+
+func (r CreateReq) GetMetadata(ctx context.Context, tx *sql.Tx, id int64, status shift.Status) ([]byte, error) {
+	return json.Marshal(&r)
 }

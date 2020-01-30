@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var perfCount = flag.Int("perf_count", 10000, "performance test count")
+var perfCount = flag.Int("perf_count", 50000, "performance test count")
 
 func TestRun(t *testing.T) {
 	defer unsure.CheatFateForTesting(t)()
@@ -236,35 +236,38 @@ func TestPerformance(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	// 35% limit sells
-	wg.Add(1)
-	go func() {
-		limit := req
-		limit.Rand = rand.New(rand.NewSource(0))
-		limit.Count = int(count * 0.35)
-		limit.Type = orders.TypeLimit
-		limit.Buy = false
-		limit.Price = req.Price + 1
-		err := gen.GenOrders(ctx, dbc, limit)
-		jtest.Assert(t, nil, err)
-		wg.Done()
-		fmt.Printf("Done limit sells: %v\n", limit.Count)
-	}()
+	// 35% (7*5%) limit
+	for i := 0; i < 7; i++ {
+		// sells
+		wg.Add(1)
+		go func() {
+			limit := req
+			limit.Rand = rand.New(rand.NewSource(0))
+			limit.Count = int(count * 0.05)
+			limit.Type = orders.TypeLimit
+			limit.Buy = false
+			limit.Price = req.Price + 1
+			err := gen.GenOrders(ctx, dbc, limit)
+			jtest.Assert(t, nil, err)
+			wg.Done()
+			fmt.Printf("Done limit sells: %v\n", limit.Count)
+		}()
 
-	// 35% limit buys
-	wg.Add(1)
-	go func() {
-		limit := req
-		limit.Rand = rand.New(rand.NewSource(0))
-		limit.Count = int(count * 0.35)
-		limit.Type = orders.TypeLimit
-		limit.Buy = true
-		limit.Price = req.Price + 1
-		err := gen.GenOrders(ctx, dbc, limit)
-		jtest.Assert(t, nil, err)
-		wg.Done()
-		fmt.Printf("Done limit buys: %v\n", limit.Count)
-	}()
+		// buys
+		wg.Add(1)
+		go func() {
+			limit := req
+			limit.Rand = rand.New(rand.NewSource(0))
+			limit.Count = int(count * 0.05)
+			limit.Type = orders.TypeLimit
+			limit.Buy = true
+			limit.Price = req.Price + 1
+			err := gen.GenOrders(ctx, dbc, limit)
+			jtest.Assert(t, nil, err)
+			wg.Done()
+			fmt.Printf("Done limit buys: %v\n", limit.Count)
+		}()
+	}
 
 	// 10% market sells
 	wg.Add(1)

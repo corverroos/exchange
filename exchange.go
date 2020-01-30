@@ -3,6 +3,7 @@ package exchange
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"exchange/db/cursors"
 	"exchange/db/orders"
 	"exchange/db/results"
@@ -31,6 +32,7 @@ func Run(ctx context.Context, dbc *sql.DB, opts ...Option) error {
 		mLatency:  func() func() { return func() {} },
 		maxBatch:  100,
 	}
+
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -195,27 +197,20 @@ func (s *state) StoreResults(ctx context.Context) error {
 }
 
 func (s *state) Enqueue(ctx context.Context, fate fate.Fate, e *rpatterns.AckEvent) error {
-	if !reflex.IsAnyType(e.Type, orders.StatusPending, orders.StatusCancelling) {
+	var (
+		cmd matcher.Command
+		err error
+	)
+	if reflex.IsType(e.Type, orders.StatusPending) {
+		cmd, err = makeCreate(e)
+	} else if reflex.IsType(e.Type, orders.StatusCancelling) {
+		cmd, err = makeCancel(e)
+	} else {
 		// We only care about pending and cancelling states.
 		return nil
 	}
-
-	o, err := orders.Lookup(ctx, s.dbc, e.ForeignIDInt())
 	if err != nil {
 		return err
-	}
-
-	var typ matcher.CommandType
-	if reflex.IsType(e.Type, orders.StatusCancelling) {
-		typ = matcher.CommandCancel
-	} else if o.Type == orders.TypeMarket {
-		typ = matcher.CommandMarket
-	} else if o.Type == orders.TypePostOnly {
-		typ = matcher.CommandPostOnly
-	} else if o.Type == orders.TypeLimit {
-		typ = matcher.CommandLimit
-	} else {
-		return errors.New("unsupported order type/status", j.KV("id", o.ID))
 	}
 
 	seq := e.IDInt()
@@ -236,20 +231,55 @@ func (s *state) Enqueue(ctx context.Context, fate fate.Fate, e *rpatterns.AckEve
 		s.input <- matcher.Command{Sequence: i}
 	}
 
-	cmd := matcher.Command{
-		Sequence:      seq,
-		Type:          typ,
-		IsBuy:         o.IsBuy,
-		OrderID:       o.ID,
-		LimitPrice:    o.LimitPrice,
-		LimitVolume:   o.LimitVolume,
-		MarketBase:    o.MarketBase,
-		MarketCounter: o.MarketCounter,
-	}
-
 	s.input <- cmd
 
 	return nil
+}
+
+func makeCancel(e *rpatterns.AckEvent) (matcher.Command, error) {
+	var isBuy bool
+	err := json.Unmarshal(e.MetaData, &isBuy)
+	if err != nil {
+		return matcher.Command{}, err
+	}
+
+	return matcher.Command{
+		Sequence: e.IDInt(),
+		Type:     matcher.CommandCancel,
+		IsBuy:    isBuy,
+		OrderID:  e.ForeignIDInt(),
+	}, nil
+}
+
+func makeCreate(e *rpatterns.AckEvent) (matcher.Command, error) {
+	var req orders.CreateReq
+	err := json.Unmarshal(e.MetaData, &req)
+	if err != nil {
+		return matcher.Command{}, err
+	}
+
+	var typ matcher.CommandType
+	if req.Type == orders.TypeMarket {
+		typ = matcher.CommandMarket
+	} else if req.Type == orders.TypePostOnly {
+		typ = matcher.CommandPostOnly
+	} else if req.Type == orders.TypeLimit {
+		typ = matcher.CommandLimit
+	} else {
+		return matcher.Command{}, errors.New("unsupported order type/status",
+			j.KV("id", e.ForeignIDInt()))
+	}
+
+	return matcher.Command{
+		Sequence:      e.IDInt(),
+		Type:          typ,
+		IsBuy:         req.IsBuy,
+		OrderID:       e.ForeignIDInt(),
+		LimitPrice:    req.LimitPrice,
+		LimitVolume:   req.LimitVolume,
+		MarketBase:    req.MarketBase,
+		MarketCounter: req.MarketCounter,
+	}, nil
 }
 
 func buildOrderBook(ctx context.Context, db *sql.DB, seq int64) (matcher.OrderBook, error) {
