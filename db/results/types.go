@@ -1,7 +1,7 @@
 package results
 
 import (
-	"exchange/matcher"
+	"github.com/corverroos/exchange/matcher"
 	"time"
 )
 

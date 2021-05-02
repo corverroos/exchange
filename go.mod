@@ -1,6 +1,6 @@
-module exchange
+module github.com/corverroos/exchange
 
-go 1.13
+go 1.16
 
 require (
 	github.com/corverroos/unsure v0.0.0-20200127140516-30bfc314b5fc

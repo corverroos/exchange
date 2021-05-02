@@ -4,7 +4,7 @@ package gen
 import (
 	"context"
 	"database/sql"
-	"exchange/db/orders"
+	"github.com/corverroos/exchange/db/orders"
 	"math/rand"
 
 	"github.com/shopspring/decimal"

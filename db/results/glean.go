@@ -2,7 +2,7 @@ package results
 
 import (
 	"encoding/json"
-	"exchange/matcher"
+	"github.com/corverroos/exchange/matcher"
 )
 
 //go:generate glean -table=results
