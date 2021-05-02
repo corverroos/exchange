@@ -6,9 +6,9 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// match applies the command to the order book and returns
-// the match type and any trades.
-func match(book *OrderBook, cmd Command, scale int) (Type, []Trade) {
+// MatchCommand applies the command to the order book and returns
+// the match result type and any trades.
+func MatchCommand(book *OrderBook, cmd Command, scale int) (Type, []Trade) {
 	switch cmd.Type {
 
 	case CommandUnknown:
@@ -99,10 +99,10 @@ func applyMarket(book *OrderBook, cmd Command, scale int) ([]Trade, bool) {
 func trade(book *OrderBook, cmd Command, want want) []Trade {
 	var side []Order
 	if cmd.IsBuy {
-		// Buy orders match asks.
+		// Buy orders MatchCommand asks.
 		side = book.Asks
 	} else {
-		// Sell orders match bids.
+		// Sell orders MatchCommand bids.
 		side = book.Bids
 	}
 

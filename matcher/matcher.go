@@ -11,7 +11,7 @@ import (
 // results including trades. The order book and input commands
 // should be sequential. The snap function allows taking
 // snapshots of the order book. The latency function allows
-// measuring match latency.
+// measuring MatchCommand latency.
 func Match(ctx context.Context, book OrderBook,
 	input <-chan Command, output chan<- Result,
 	scale int, snap func(*OrderBook), latency func() func()) error {
@@ -38,7 +38,7 @@ func Match(ctx context.Context, book OrderBook,
 		}
 
 		l := latency()
-		typ, tl := match(&book, cmd, scale)
+		typ, tl := MatchCommand(&book, cmd, scale)
 		l()
 
 		book.Sequence = cmd.Sequence
